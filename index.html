@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Meta Viewport Tag added as requested -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applied Mechanics Quiz</title>
+    
+    <!-- Google Fonts: Cairo (Arabic) & Inter (English) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- MathJax for Formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #155e75 0%, #000000 85%);
+            background-attachment: fixed; 
+            color: #e2e8f0;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .font-cairo { font-family: 'Cairo', sans-serif; }
+        .rtl { direction: rtl; }
+
+        .glass-panel {
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(6, 182, 212, 0.1); 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .option-button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .option-button:active { transform: scale(0.98); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #000000; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow { animation: spin-slow 12s linear infinite; }
+    </style>
+</head>
+<body class="flex flex-col items-center p-4 md:p-6 transition-all duration-500">
+
+    <!-- Header (Medium Size) -->
+    <header id="main-header" class="w-full max-w-4xl flex flex-row justify-between items-center mb-6 p-4 glass-panel rounded-2xl mt-2 gap-4 z-20 relative">
+        <div class="flex items-center gap-4 w-auto">
+            <div class="bg-black/40 p-2.5 rounded-xl border border-cyan-900/50 w-12 h-12 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-900/10 group">
+                <i data-lucide="settings" class="w-6 h-6 text-cyan-500 group-hover:animate-spin-slow transition-transform duration-700"></i>
+            </div>
+            <h1 id="app-title" class="text-xl md:text-2xl font-bold text-slate-100 tracking-tight text-left leading-tight">
+                Applied Mechanics
+            </h1>
+        </div>
+        <button onclick="toggleLanguage()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/50 hover:bg-slate-900 border border-slate-700 transition-all text-cyan-500 font-bold shadow-lg active:scale-95 group text-sm">
+            <i data-lucide="globe" class="w-4 h-4 group-hover:rotate-12 transition-transform"></i>
+            <span id="lang-btn-text">العربية</span>
+        </button>
+    </header>
+
+    <!-- Main Container (Medium Size) -->
+    <main class="w-full max-w-4xl glass-panel rounded-2xl p-6 md:p-8 relative overflow-hidden min-h-[500px] flex flex-col z-10 border-t border-cyan-500/10">
+        
+        <!-- Background Blobs -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <div class="absolute -top-20 -right-20 w-64 h-64 bg-cyan-900/10 rounded-full blur-[80px]"></div>
+            <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-cyan-900/5 rounded-full blur-[80px]"></div>
+        </div>
+
+        <!-- Quiz View -->
+        <div id="quiz-view" class="z-10 w-full flex flex-col h-full fade-in flex">
+            
+            <!-- Progress & Stats -->
+            <div class="mb-6">
+                <div class="flex justify-between text-sm text-slate-400 mb-2 font-medium px-1">
+                    <span id="question-tracker">Question 1</span>
+                    <span id="score-tracker" class="text-cyan-400 bg-black/40 px-3 py-1 rounded-full border border-cyan-900/50 text-xs md:text-sm">Score: 0</span>
+                </div>
+                <div class="w-full bg-black/60 h-2 rounded-full overflow-hidden border border-slate-800">
+                    <div id="progress-bar" class="bg-cyan-600 h-full rounded-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(8,145,178,0.6)]" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Question Text (Medium: text-lg to text-xl) -->
+            <div class="min-h-[80px] flex items-center mb-6">
+                <h2 id="question-text" class="text-lg md:text-2xl font-bold leading-relaxed text-slate-100 drop-shadow-md w-full">
+                    Loading...
+                </h2>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="options-container" class="grid gap-3 mb-8">
+                <!-- Options injected by JS -->
+            </div>
+
+            <!-- Footer (Hint & Navigation) -->
+            <div class="mt-auto flex flex-col gap-4 md:flex-row md:justify-between md:items-center border-t border-slate-800 pt-6">
+                
+                <!-- Hint Section -->
+                <div class="w-full md:w-auto">
+                    <button onclick="toggleHint()" id="hint-btn" class="text-cyan-500 hover:text-cyan-400 text-sm font-bold flex items-center gap-2 transition-colors px-3 py-2 rounded-xl hover:bg-cyan-950/20 active:scale-95 w-full md:w-auto justify-center md:justify-start">
+                        <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                        <span id="hint-btn-text">Show Hint</span>
+                    </button>
+                    <div id="hint-box" class="hidden mt-3 text-sm text-slate-300 bg-black/90 p-4 rounded-xl border-l-4 border-cyan-600 shadow-xl w-full md:max-w-lg fade-in">
+                        <span class="text-cyan-500 font-bold mr-2 block mb-1 uppercase tracking-wider text-xs">Hint</span>
+                        <span id="hint-text"></span>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons (Medium) -->
+                <div class="flex gap-3 w-full md:w-auto">
+                    <button onclick="handlePrev()" id="prev-btn" class="flex-1 md:flex-none px-6 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base bg-black/60 text-slate-400 hover:bg-slate-900 border border-slate-700 hover:border-slate-500 disabled:opacity-30 disabled:cursor-not-allowed">
+                        <i id="prev-btn-icon" data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span id="prev-btn-text">Back</span>
+                    </button>
+                    
+                    <button onclick="handleNext()" id="next-btn" class="flex-1 md:flex-none px-6 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base bg-black/60 text-slate-400 hover:bg-slate-900 border border-slate-700 hover:border-slate-500">
+                        <span id="next-btn-text">Skip</span>
+                        <i id="next-btn-icon" data-lucide="skip-forward" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Score View (Medium) -->
+        <div id="score-view" class="hidden flex-col items-center justify-center flex-1 text-center z-10 py-10 fade-in">
+            <div class="mb-8 relative">
+               <div class="absolute inset-0 bg-cyan-600/20 blur-3xl rounded-full"></div>
+               <div class="relative bg-black/60 p-6 rounded-full border border-cyan-500/30">
+                   <i data-lucide="award" class="w-12 h-12 text-cyan-500"></i>
+               </div>
+            </div>
+            <h2 id="final-title" class="text-3xl font-bold mb-4 text-white tracking-tight">Final Score</h2>
+            
+            <!-- Percentage Display -->
+            <div class="text-6xl font-black text-cyan-500 mb-4 tracking-tighter drop-shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                <span id="final-percentage">0%</span>
+            </div>
+            
+            <div class="text-lg text-slate-500 font-medium mb-8">
+                <span id="final-score-value">0</span> / <span id="total-questions-count">0</span>
+            </div>
+            
+            <p id="final-message" class="text-slate-300 mb-10 text-lg max-w-lg leading-relaxed font-light px-4">
+                Message...
+            </p>
+            <button onclick="restartQuiz()" class="group px-8 py-3 bg-cyan-700 hover:bg-cyan-600 text-white font-bold rounded-xl transition-all hover:scale-105 shadow-lg shadow-cyan-900/30 flex items-center gap-3 text-base w-full md:w-auto justify-center">
+                <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-500"></i>
+                <span id="restart-btn-text">Restart Quiz</span>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-8 mb-6 text-center text-slate-600 text-xs font-medium tracking-wide z-10">
+        <p class="flex items-center justify-center gap-2">
+            <span>Created by</span>
+            <span class="text-cyan-600 font-bold">Programmer Bilal Mohamed</span>
+        </p>
+    </footer>
+
+    <script>
+        // --- 1. DATA: Questions ---
+        const questionsData = [
+            // Page 1
+            {
+                id: 1,
+                question: "Mechanics is the branch of physics that deals with:",
+                questionAr: "الميكانيكا هي فرع من الفيزياء يتعامل مع:",
+                options: { A: "Heat and temperature", B: "Motion and forces", C: "Electricity", D: "Sound waves" },
+                optionsAr: { A: "الحرارة ودرجة الحرارة", B: "الحركة والقوى", C: "الكهرباء", D: "الموجات الصوتية" },
+                correct: "B",
+                hint: "It involves how objects move and what pushes or pulls them.",
+                hintAr: "يتعلق بكيفية تحرك الأشياء وما يدفعها أو يسحبها."
+            },
+            {
+                id: 2,
+                question: "Which of the following is NOT a branch of mechanics?",
+                questionAr: "أي مما يلي ليس فرعاً من فروع الميكانيكا؟",
+                options: { A: "Statics", B: "Dynamics", C: "Kinematics", D: "Thermodynamics" },
+                optionsAr: { A: "الاستاتيكا", B: "الديناميكا", C: "الكينماتيكا", D: "الديناميكا الحرارية" },
+                correct: "D",
+                hint: "One of these deals with heat energy, not just motion.",
+                hintAr: "واحد منهم يتعامل مع الطاقة الحرارية، وليس الحركة فقط."
+            },
+            {
+                id: 3,
+                question: "In medical applications, biomechanics mainly studies:",
+                questionAr: "في التطبيقات الطبية، تدرس الميكانيكا الحيوية بشكل أساسي:",
+                options: { A: "Blood pressure only", B: "Structure of DNA", C: "Movement of the human body", D: "Chemical composition of cells" },
+                optionsAr: { A: "ضغط الدم فقط", B: "هيكل الحمض النووي", C: "حركة جسم الإنسان", D: "التركيب الكيميائي للخلايا" },
+                correct: "C",
+                hint: "Bio-mechanics applies mechanical principles to biological systems, specifically motion.",
+                hintAr: "تطبق الميكانيكا الحيوية المبادئ الميكانيكية على الأنظمة البيولوجية، وتحديداً الحركة."
+            },
+            {
+                id: 4,
+                question: "An example of statics in medicine is:",
+                questionAr: "مثال على الاستاتيكا في الطب هو:",
+                options: { A: "Analysis of forces on a stationary bone implant", B: "Heart pumping blood", C: "Running motion analysis", D: "Respiration process" },
+                optionsAr: { A: "تحليل القوى على زرعة عظمية ثابتة", B: "ضخ القلب للدم", C: "تحليل حركة الجري", D: "عملية التنفس" },
+                correct: "A",
+                hint: "Statics deals with bodies at rest or in equilibrium.",
+                hintAr: "تتعامل الاستاتيكا مع الأجسام في حالة راحة أو توازن."
+            },
+            {
+                id: 5,
+                question: "Dynamics is concerned with:",
+                questionAr: "تهتم الديناميكا بـ:",
+                options: { A: "Bodies at rest", B: "Bodies in motion under forces", C: "Heat transfer", D: "Electromagnetic waves" },
+                optionsAr: { A: "الأجسام الساكنة", B: "الأجسام المتحركة تحت تأثير القوى", C: "نقل الحرارة", D: "الموجات الكهرومغناطيسية" },
+                correct: "B",
+                hint: "Dynamic means changing or moving.",
+                hintAr: "ديناميكي يعني متغير أو متحرك."
+            },
+            {
+                id: 6,
+                question: "Which medical device applies principles of mechanics?",
+                questionAr: "أي جهاز طبي يطبق مبادئ الميكانيكا؟",
+                options: { A: "X-ray machine", B: "Blood pressure monitor", C: "Wheelchair", D: "Microscope" },
+                optionsAr: { A: "جهاز الأشعة السينية", B: "جهاز قياس ضغط الدم", C: "الكرسي المتحرك", D: "المجهر" },
+                correct: "C",
+                hint: "Think of simple machines like wheels and levers.",
+                hintAr: "فكر في الآلات البسيطة مثل العجلات والرافعات."
+            },
+            {
+                id: 7,
+                question: "Kinematics describes motion without considering:",
+                questionAr: "تصف الكينماتيكا الحركة دون النظر إلى:",
+                options: { A: "Velocity", B: "Acceleration", C: "Mass and forces", D: "Displacement" },
+                optionsAr: { A: "السرعة", B: "التسارع", C: "الكتلة والقوى", D: "الإزاحة" },
+                correct: "C",
+                hint: "It describes 'how' things move, not 'why' (forces).",
+                hintAr: "إنها تصف 'كيف' تتحرك الأشياء، وليس 'لماذا' (القوى)."
+            },
+            {
+                id: 8,
+                question: "Which branch of mechanics is applied in gait analysis for patients?",
+                questionAr: "أي فرع من فروع الميكانيكا يطبق في تحليل المشي للمرضى؟",
+                options: { A: "Statics", B: "Dynamics", C: "Thermodynamics", D: "Optics" },
+                optionsAr: { A: "الاستاتيكا", B: "الديناميكا", C: "الديناميكا الحرارية", D: "البصريات" },
+                correct: "B",
+                hint: "Walking involves motion and forces.",
+                hintAr: "المشي ينطوي على حركة وقوى."
+            },
+            {
+                id: 9,
+                question: "Force applied on bones and muscles during daily activities is studied in:",
+                questionAr: "يتم دراسة القوة المطبقة على العظام والعضلات أثناء الأنشطة اليومية في:",
+                options: { A: "Biomechanics", B: "Thermodynamics", C: "Optics", D: "Acoustics" },
+                optionsAr: { A: "الميكانيكا الحيوية", B: "الديناميكا الحرارية", C: "البصريات", D: "الصوتيات" },
+                correct: "A",
+                hint: "Bio + Mechanics.",
+                hintAr: "حيوية + ميكانيكا."
+            },
+            {
+                id: 10,
+                question: "An example of mechanics in medical application is:",
+                questionAr: "مثال على الميكانيكا في التطبيقات الطبية هو:",
+                options: { A: "Fluid dynamics of blood circulation", B: "Light refraction in the eye", C: "Sound waves in the ear", D: "Chemical bonding in drugs" },
+                optionsAr: { A: "ديناميكا سوائل الدورة الدموية", B: "انكسار الضوء في العين", C: "موجات الصوت في الأذن", D: "الترابط الكيميائي في الأدوية" },
+                correct: "A",
+                hint: "Blood is a fluid that moves through pipes (veins/arteries).",
+                hintAr: "الدم سائل يتحرك عبر أنابيب (أوردة/شرايين)."
+            },
+            // Page 2 - Units
+            {
+                id: 11,
+                question: "The SI unit of force is:",
+                questionAr: "وحدة القوة في النظام الدولي هي:",
+                options: { A: "Newton", B: "Joule", C: "Watt", D: "Pascal" },
+                optionsAr: { A: "نيوتن", B: "جول", C: "واط", D: "باسكال" },
+                correct: "A",
+                hint: "Named after the physicist who formulated the laws of motion.",
+                hintAr: "سميت على اسم الفيزيائي الذي صاغ قوانين الحركة."
+            },
+            {
+                id: 12,
+                question: "One Newton is equal to:",
+                questionAr: "واحد نيوتن يساوي:",
+                options: { A: "kg·m/s", B: "kg·m/s²", C: "kg·m²/s²", D: "N·m" },
+                optionsAr: { A: "kg·m/s", B: "kg·m/s²", C: "kg·m²/s²", D: "N·m" },
+                correct: "B",
+                hint: "F = m × a (mass × acceleration).",
+                hintAr: "القوة = الكتلة × التسارع."
+            },
+            {
+                id: 13,
+                question: "The SI unit of work or energy is:",
+                questionAr: "وحدة الشغل أو الطاقة في النظام الدولي هي:",
+                options: { A: "Watt", B: "Joule", C: "Newton", D: "Erg" },
+                optionsAr: { A: "واط", B: "جول", C: "نيوتن", D: "إرج" },
+                correct: "B",
+                hint: "Work = Force × Distance (Newton-meter).",
+                hintAr: "الشغل = القوة × المسافة (نيوتن-متر)."
+            },
+            {
+                id: 14,
+                question: "The SI unit of power is:",
+                questionAr: "وحدة القدرة في النظام الدولي هي:",
+                options: { A: "Joule", B: "Watt", C: "Newton meter", D: "Calorie" },
+                optionsAr: { A: "جول", B: "واط", C: "نيوتن متر", D: "سعرة حرارية" },
+                correct: "B",
+                hint: "Power is the rate of doing work (Joules per second).",
+                hintAr: "القدرة هي معدل بذل الشغل (جول في الثانية)."
+            },
+            {
+                id: 15,
+                question: "The SI base unit of mass is:",
+                questionAr: "الوحدة الأساسية للكتلة في النظام الدولي هي:",
+                options: { A: "Gram", B: "Kilogram", C: "Newton", D: "Pound" },
+                optionsAr: { A: "جرام", B: "كيلوجرام", C: "نيوتن", D: "باوند" },
+                correct: "B",
+                hint: "It is the only base unit that includes a prefix 'kilo'.",
+                hintAr: "هي الوحدة الأساسية الوحيدة التي تتضمن بادئة 'كيلو'."
+            },
+            {
+                id: 16,
+                question: "The SI unit of acceleration is:",
+                questionAr: "وحدة التسارع في النظام الدولي هي:",
+                options: { A: "m/s", B: "m/s²", C: "m²/s²", D: "N/kg" },
+                optionsAr: { A: "m/s", B: "m/s²", C: "m²/s²", D: "N/kg" },
+                correct: "B",
+                hint: "Change in velocity (m/s) per second.",
+                hintAr: "التغير في السرعة (m/s) لكل ثانية."
+            },
+            {
+                id: 17,
+                question: "The SI unit of length is:",
+                questionAr: "وحدة الطول في النظام الدولي هي:",
+                options: { A: "Meter", B: "Centimeter", C: "Foot", D: "Yard" },
+                optionsAr: { A: "متر", B: "سنتيمتر", C: "قدم", D: "ياردة" },
+                correct: "A",
+                hint: "Standard metric unit for distance.",
+                hintAr: "الوحدة المترية القياسية للمسافة."
+            },
+            {
+                id: 18,
+                question: "The SI unit of time is:",
+                questionAr: "وحدة الوقت في النظام الدولي هي:",
+                options: { A: "Hour", B: "Second", C: "Minute", D: "Millisecond" },
+                optionsAr: { A: "ساعة", B: "ثانية", C: "دقيقة", D: "مللي ثانية" },
+                correct: "B",
+                hint: "The base unit used in most physics calculations.",
+                hintAr: "الوحدة الأساسية المستخدمة في معظم الحسابات الفيزيائية."
+            },
+            {
+                id: 19,
+                question: "1 kgf (kilogram-force) = ? N",
+                questionAr: "1 كجم قوة = ؟ نيوتن",
+                options: { A: "1 N", B: "9.81 N", C: "98.1 N", D: "981 N" },
+                optionsAr: { A: "1 N", B: "9.81 N", C: "98.1 N", D: "981 N" },
+                correct: "B",
+                hint: "It relates to the acceleration due to gravity (g).",
+                hintAr: "يتعلق بتسارع الجاذبية الأرضية (g)."
+            },
+            {
+                id: 20,
+                question: "1 m/s = ? km/h",
+                questionAr: "1 م/ث = ؟ كم/س",
+                options: { A: "2.6 km/h", B: "3.6 km/h", C: "4.6 km/h", D: "5.6 km/h" },
+                optionsAr: { A: "2.6 km/h", B: "3.6 km/h", C: "4.6 km/h", D: "5.6 km/h" },
+                correct: "B",
+                hint: "Multiply by 3600 (seconds) and divide by 1000 (meters).",
+                hintAr: "اضرب في 3600 (ثانية) واقسم على 1000 (متر)."
+            },
+            // Page 3 - Scalars and Vectors
+            {
+                id: 21,
+                question: "Which of the following is a scalar quantity?",
+                questionAr: "أي مما يلي كمية قياسية؟",
+                options: { A: "Velocity", B: "Force", C: "Mass", D: "Displacement" },
+                optionsAr: { A: "السرعة المتجهة", B: "القوة", C: "الكتلة", D: "الإزاحة" },
+                correct: "C",
+                hint: "Scalars have magnitude only, no direction.",
+                hintAr: "الكميات القياسية لها مقدار فقط، ولا اتجاه لها."
+            },
+            {
+                id: 22,
+                question: "Which of the following is a vector quantity?",
+                questionAr: "أي مما يلي كمية متجهة؟",
+                options: { A: "Speed", B: "Temperature", C: "Work", D: "Acceleration" },
+                optionsAr: { A: "السرعة", B: "درجة الحرارة", C: "الشغل", D: "التسارع" },
+                correct: "D",
+                hint: "Vectors need direction to be fully described.",
+                hintAr: "الكميات المتجهة تحتاج إلى اتجاه ليتم وصفها بالكامل."
+            },
+            {
+                id: 23,
+                question: "The magnitude of a vector is always:",
+                questionAr: "مقدار المتجه دائماً يكون:",
+                options: { A: "Negative", B: "Zero or positive", C: "Positive or negative", D: "Imaginary" },
+                optionsAr: { A: "سالب", B: "صفر أو موجب", C: "موجب أو سالب", D: "خيالي" },
+                correct: "B",
+                hint: "Length cannot be negative.",
+                hintAr: "الطول لا يمكن أن يكون سالباً."
+            },
+            {
+                id: 24,
+                question: "Which of the following represents the unit vector in x-direction?",
+                questionAr: "أي مما يلي يمثل متجه الوحدة في اتجاه x؟",
+                options: { A: "î", B: "ĵ", C: "k", D: "None" },
+                optionsAr: { A: "î", B: "ĵ", C: "k", D: "لا شيء" },
+                correct: "A",
+                hint: "i is for x, j is for y, k is for z.",
+                hintAr: "i لـ x، و j لـ y، و k لـ z."
+            },
+            {
+                id: 25,
+                question: "The resultant of two perpendicular vectors can be found using:",
+                questionAr: "يمكن إيجاد محصلة متجهين متعامدين باستخدام:",
+                options: { A: "Simple addition", B: "Pythagoras theorem", C: "Subtraction", D: "Multiplication" },
+                optionsAr: { A: "الجمع البسيط", B: "نظرية فيثاغورس", C: "الطرح", D: "الضرب" },
+                correct: "B",
+                hint: "Think of a right-angled triangle.",
+                hintAr: "فكر في مثلث قائم الزاوية."
+            },
+            {
+                id: 26,
+                question: "Displacement differs from distance because:",
+                questionAr: "تختلف الإزاحة عن المسافة لأن:",
+                options: { A: "It is always larger", B: "It is a vector quantity", C: "It is measured in meters²", D: "It has no magnitude" },
+                optionsAr: { A: "هي دائما أكبر", B: "هي كمية متجهة", C: "تُقاس بالمتر المربع", D: "ليس لها مقدار" },
+                correct: "B",
+                hint: "Distance is total path length, Displacement includes direction.",
+                hintAr: "المسافة هي طول المسار الكلي، الإزاحة تتضمن الاتجاه."
+            },
+            {
+                id: 27,
+                question: "The unit of a vector depends on:",
+                questionAr: "تعتمد وحدة المتجه على:",
+                options: { A: "Its direction", B: "Its magnitude", C: "Both magnitude and direction", D: "Neither" },
+                optionsAr: { A: "اتجاهه", B: "مقداره", C: "المقدار والاتجاه", D: "لا شيء مما سبق" },
+                correct: "B",
+                hint: "The magnitude carries the physical dimension (e.g., Newtons for force).",
+                hintAr: "المقدار يحمل البعد الفيزيائي (مثل نيوتن للقوة)."
+            },
+            // Page 4 - Displacement Problems
+            {
+                id: 28,
+                question: "A runner completes one full lap (400 m) around a circular track and returns to the start. The displacement is:",
+                questionAr: "أكمل عداء لفة كاملة (400 م) حول مضمار دائري وعاد إلى البداية. الإزاحة هي:",
+                options: { A: "400 m", B: "200 m", C: "0 m", D: "800 m" },
+                optionsAr: { A: "400 m", B: "200 m", C: "0 m", D: "800 m" },
+                correct: "C",
+                hint: "If you end where you started, the change in position is zero.",
+                hintAr: "إذا انتهيت حيث بدأت، فإن التغير في الموقع هو صفر."
+            },
+            {
+                id: 29,
+                question: "A person walks 100 m north, then 100 m south. The displacement is:",
+                questionAr: "شخص يمشي 100 م شمالاً، ثم 100 م جنوباً. الإزاحة هي:",
+                options: { A: "0 m", B: "100 m", C: "200 m", D: "50 m" },
+                optionsAr: { A: "0 m", B: "100 m", C: "200 m", D: "50 m" },
+                correct: "A",
+                hint: "North and South are opposite directions and cancel out.",
+                hintAr: "الشمال والجنوب اتجاهات متعاكسة ويلغي كل منهما الآخر."
+            },
+            {
+                id: 30,
+                question: "A car travels 3 km east and then 4 km north. The magnitude of its displacement is:",
+                questionAr: "تسافر سيارة 3 كم شرقاً ثم 4 كم شمالاً. مقدار الإزاحة هو:",
+                options: { A: "5 km", B: "7 km", C: "1 km", D: "12 km" },
+                optionsAr: { A: "5 km", B: "7 km", C: "1 km", D: "12 km" },
+                correct: "A",
+                hint: "Use Pythagoras: √(3² + 4²).",
+                hintAr: "استخدم فيثاغورس: √(3² + 4²)."
+            },
+            {
+                id: 31,
+                question: "Which of the following statements is true?",
+                questionAr: "أي من العبارات التالية صحيحة؟",
+                options: { A: "Distance is always equal to displacement", B: "Displacement can never be negative", C: "Displacement can be zero even if distance is not zero", D: "Distance can be zero but displacement cannot" },
+                optionsAr: { A: "المسافة دائما تساوي الإزاحة", B: "الإزاحة لا يمكن أن تكون سالبة", C: "يمكن أن تكون الإزاحة صفراً حتى لو لم تكن المسافة صفراً", D: "المسافة يمكن أن تكون صفراً لكن الإزاحة لا" },
+                correct: "C",
+                hint: "Think about the circular track example.",
+                hintAr: "فكر في مثال المضمار الدائري."
+            },
+            {
+                id: 32,
+                question: "A particle moves along a straight line from x=2 m to x=-3 m. Its displacement is:",
+                questionAr: "جسيم يتحرك على خط مستقيم من x=2 م إلى x=-3 م. إزاحته هي:",
+                options: { A: "+5 m", B: "-5 m", C: "1 m", D: "0 m" },
+                optionsAr: { A: "+5 m", B: "-5 m", C: "1 m", D: "0 m" },
+                correct: "B",
+                hint: "Final position - Initial position (-3 - 2).",
+                hintAr: "الموقع النهائي - الموقع الابتدائي (-3 - 2)."
+            },
+            // Page 5 - Resultant Force
+            {
+                id: 33,
+                question: "When two forces are equal and opposite, the resultant is:",
+                questionAr: "عندما تكون قوتان متساويتين ومتعاكستين، المحصلة تكون:",
+                options: { A: "Zero", B: "Double one of the forces", C: "Half one of the forces", D: "Their vector sum" },
+                optionsAr: { A: "صفر", B: "ضعف إحدى القوى", C: "نصف إحدى القوى", D: "مجموعهما المتجهي" },
+                correct: "A",
+                hint: "They balance each other out.",
+                hintAr: "إنهما توازنان بعضهما البعض."
+            },
+            {
+                id: 34,
+                question: "If two forces of 10 N and 20 N act in the same line and direction, the resultant is:",
+                questionAr: "إذا أثرت قوتان 10 نيوتن و 20 نيوتن في نفس الخط والاتجاه، المحصلة تكون:",
+                options: { A: "10 N", B: "20 N", C: "30 N", D: "0 N" },
+                optionsAr: { A: "10 N", B: "20 N", C: "30 N", D: "0 N" },
+                correct: "C",
+                hint: "Forces in the same direction add up.",
+                hintAr: "القوى في نفس الاتجاه تُجمع."
+            },
+            {
+                id: 35,
+                question: "If two forces of 10 N and 20 N act in opposite directions, the resultant is:",
+                questionAr: "إذا أثرت قوتان 10 نيوتن و 20 نيوتن في اتجاهين متعاكسين، المحصلة تكون:",
+                options: { A: "10 N", B: "20 N", C: "30 N", D: "0 N" },
+                optionsAr: { A: "10 N", B: "20 N", C: "30 N", D: "0 N" },
+                correct: "A",
+                hint: "Subtract the smaller force from the larger one.",
+                hintAr: "اطرح القوة الأصغر من القوة الأكبر."
+            },
+            {
+                id: 36,
+                question: "Two forces of 5 N and 12 N act at right angles to each other. The magnitude of the resultant force is:",
+                questionAr: "قوتان 5 نيوتن و 12 نيوتن تؤثران بزاوية قائمة على بعضهما. مقدار القوة المحصلة هو:",
+                options: { A: "7 N", B: "13 N", C: "10 N", D: "17 N" },
+                optionsAr: { A: "7 N", B: "13 N", C: "10 N", D: "17 N" },
+                correct: "B",
+                hint: "Use Pythagoras: √(5² + 12²).",
+                hintAr: "استخدم فيثاغورس: √(5² + 12²)."
+            },
+            {
+                id: 37,
+                question: "The resultant force is:",
+                questionAr: "القوة المحصلة هي:",
+                options: { A: "The algebraic sum of all forces", B: "The vector sum of all forces acting on a body", C: "The product of all forces", D: "The difference between maximum and minimum force" },
+                optionsAr: { A: "المجموع الجبري لجميع القوى", B: "المجموع المتجهي لجميع القوى المؤثرة على الجسم", C: "حاصل ضرب جميع القوى", D: "الفرق بين القوة القصوى والدنيا" },
+                correct: "B",
+                hint: "Force is a vector, so direction matters in summation.",
+                hintAr: "القوة متجه، لذا الاتجاه مهم في الجمع."
+            },
+            {
+                id: 38,
+                question: "If several forces act on a body and their resultant is zero, the body is said to be in:",
+                questionAr: "إذا أثرت عدة قوى على جسم وكانت محصلتها صفراً، يقال إن الجسم في حالة:",
+                options: { A: "Motion", B: "Vibration", C: "Equilibrium", D: "Rotation" },
+                optionsAr: { A: "حركة", B: "اهتزاز", C: "توازن (Equilibrium)", D: "دوران" },
+                correct: "C",
+                hint: "No net force means no change in motion.",
+                hintAr: "لا توجد قوة محصلة تعني عدم وجود تغيير في الحركة."
+            },
+            {
+                id: 39,
+                question: "If three coplanar forces acting on a point are 40 N (east), 30 N (north), and 20 N (west), the magnitude of the resultant is approximately:",
+                questionAr: "إذا أثرت ثلاث قوى مستوية على نقطة وهي 40 نيوتن (شرقاً) و 30 نيوتن (شمالاً) و 20 نيوتن (غرباً)، فإن مقدار المحصلة يساوي تقريباً:",
+                options: { A: "30 N", B: "40 N", C: "50 N", D: "10 N" },
+                optionsAr: { A: "30 N", B: "40 N", C: "50 N", D: "10 N" },
+                correct: "A", // Corrected to A (30 N) as per user request
+                hint: "Calculate net X (40-20) and net Y (30). Then use Pythagoras.",
+                hintAr: "احسب صافي القوة في اتجاه X (40-20) وصافي القوة في اتجاه Y (30). ثم استخدم فيثاغورس."
+            },
+            {
+                id: 40,
+                question: "Three forces act on a particle: F1=10 N (+x), F2=6 N (+y), F3=8 N (-x). The resultant magnitude is:",
+                questionAr: "تؤثر ثلاث قوى على جسيم: F1=10 نيوتن (+x)، F2=6 نيوتن (+y)، F3=8 نيوتن (-x). مقدار المحصلة هو:",
+                options: { A: "2 N", B: "4 N", C: "6 N", D: "10 N" },
+                optionsAr: { A: "2 N", B: "4 N", C: "6 N", D: "10 N" },
+                correct: "C",
+                hint: "Sum forces in X direction (10-8), then combine with Y force (6).",
+                hintAr: "اجمع القوى في اتجاه X (10-8)، ثم ادمجها مع القوة في اتجاه Y (6)."
+            }
+        ];
+
+        // --- 2. STATE ---
+        let currentQuestion = 0;
+        let score = 0;
+        let lang = 'en'; 
+        let selectedOption = null;
+        let answersState = {}; 
+        let showHintState = false;
+
+        // --- 3. DOM ELEMENTS ---
+        const els = {
+            body: document.body,
+            header: document.getElementById('main-header'),
+            title: document.getElementById('app-title'),
+            langBtnText: document.getElementById('lang-btn-text'),
+            quizView: document.getElementById('quiz-view'),
+            scoreView: document.getElementById('score-view'),
+            progress: document.getElementById('progress-bar'),
+            qTracker: document.getElementById('question-tracker'),
+            sTracker: document.getElementById('score-tracker'),
+            qText: document.getElementById('question-text'),
+            optionsContainer: document.getElementById('options-container'),
+            hintBox: document.getElementById('hint-box'),
+            hintText: document.getElementById('hint-text'),
+            hintBtnText: document.getElementById('hint-btn-text'),
+            nextBtn: document.getElementById('next-btn'),
+            nextBtnText: document.getElementById('next-btn-text'),
+            nextBtnIcon: document.getElementById('next-btn-icon'),
+            prevBtn: document.getElementById('prev-btn'),
+            prevBtnText: document.getElementById('prev-btn-text'),
+            prevBtnIcon: document.getElementById('prev-btn-icon'),
+            finalScore: document.getElementById('final-score-value'),
+            totalCount: document.getElementById('total-questions-count'),
+            finalMsg: document.getElementById('final-message'),
+            finalPercentage: document.getElementById('final-percentage'), 
+            finalTitle: document.getElementById('final-title'),
+            restartBtnText: document.getElementById('restart-btn-text')
+        };
+
+        // --- 4. LOGIC ---
+
+        function init() {
+            updateLanguageText();
+            lucide.createIcons();
+            if (questionsData.length > 0) renderQuestion();
+        }
+
+        function toggleLanguage() {
+            lang = lang === 'en' ? 'ar' : 'en';
+            
+            if (lang === 'ar') {
+                els.body.classList.add('font-cairo', 'rtl');
+                els.header.classList.add('flex-row-reverse');
+                els.prevBtnIcon.style.transform = "rotate(180deg)";
+                els.nextBtnIcon.style.transform = "rotate(180deg)";
+            } else {
+                els.body.classList.remove('font-cairo', 'rtl');
+                els.header.classList.remove('flex-row-reverse');
+                els.prevBtnIcon.style.transform = "rotate(0deg)";
+                els.nextBtnIcon.style.transform = "rotate(0deg)";
+            }
+            
+            updateLanguageText();
+            renderQuestion(); 
+        }
+
+        function updateLanguageText() {
+            const isAr = lang === 'ar';
+            els.title.innerHTML = isAr ? "الميكانيكا<br class='md:hidden'> التطبيقية" : "Applied<br class='md:hidden'> Mechanics";
+            els.langBtnText.innerText = isAr ? 'English' : 'العربية';
+            if (document.getElementById('score-view').classList.contains('flex')) {
+               renderScoreView();
+            }
+        }
+
+        function toggleHint() {
+            showHintState = !showHintState;
+            els.hintBox.classList.toggle('hidden');
+            const isAr = lang === 'ar';
+            els.hintBtnText.innerText = isAr 
+                ? (showHintState ? "إخفاء التلميح" : "إظهار التلميح") 
+                : (showHintState ? "Hide Hint" : "Show Hint");
+        }
+
+        function renderQuestion() {
+            if (questionsData.length === 0) return;
+
+            const q = questionsData[currentQuestion];
+            const isAr = lang === 'ar';
+
+            els.hintBox.classList.add('hidden');
+            showHintState = false;
+            els.hintBtnText.innerText = isAr ? "إظهار التلميح" : "Show Hint";
+
+            els.qTracker.innerText = isAr ? `السؤال ${currentQuestion + 1} من ${questionsData.length}` : `Question ${currentQuestion + 1} / ${questionsData.length}`;
+            els.sTracker.innerText = isAr ? `النقاط: ${score}` : `Score: ${score}`;
+            els.progress.style.width = `${((currentQuestion + 1) / questionsData.length) * 100}%`;
+
+            els.qText.innerText = isAr ? q.questionAr : q.question;
+            els.hintText.innerText = isAr ? q.hintAr : q.hint;
+
+            updateNavButtons();
+
+            const savedAnswer = answersState[currentQuestion];
+            selectedOption = savedAnswer ? savedAnswer.selected : null;
+
+            els.optionsContainer.innerHTML = '';
+            const opts = isAr ? q.optionsAr : q.options;
+
+            Object.entries(opts).forEach(([key, text]) => {
+                const btn = document.createElement('button');
+                
+                // Medium Sized Classes (text-base, p-4)
+                let baseClasses = "option-button w-full p-4 text-left rounded-xl border flex items-start gap-3 relative overflow-hidden group ";
+                let contentColor = "text-slate-300";
+                
+                if (selectedOption) {
+                    btn.disabled = true;
+                    if (key === q.correct) {
+                         baseClasses += "border-emerald-500/50 bg-emerald-900/30 opacity-100";
+                         contentColor = "text-slate-100";
+                         btn.innerHTML = `<div class="w-6 h-6 rounded-full bg-emerald-900/50 text-emerald-400 flex items-center justify-center border border-emerald-500/50 shrink-0"><i data-lucide="check-circle-2" class="w-4 h-4"></i></div>`;
+                    } else if (key === selectedOption) {
+                         baseClasses += "border-red-500/50 bg-red-900/30 opacity-100";
+                         btn.innerHTML = `<div class="w-6 h-6 rounded-full bg-red-900/50 text-red-400 flex items-center justify-center border border-red-500/50 shrink-0"><i data-lucide="x-circle" class="w-4 h-4"></i></div>`;
+                    } else {
+                        baseClasses += "border-slate-800 bg-black/40 opacity-40 cursor-not-allowed";
+                        btn.innerHTML = `<div class="w-6 h-6 rounded-full bg-slate-900 text-slate-500 flex items-center justify-center font-bold border border-slate-700 mt-0.5 shrink-0 text-sm">${key}</div>`;
+                    }
+                } else {
+                    baseClasses += "border-slate-800 bg-black/40 hover:bg-slate-900/80 cursor-pointer";
+                    btn.onclick = () => handleOptionClick(key);
+                    btn.innerHTML = `<div class="w-6 h-6 rounded-full bg-slate-900 text-slate-400 flex items-center justify-center font-bold border border-slate-700 group-hover:border-cyan-500 group-hover:text-cyan-400 transition-colors mt-0.5 shrink-0 text-sm">${key}</div>`;
+                }
+
+                btn.className = baseClasses;
+                
+                // Medium Text Size
+                const span = document.createElement('span');
+                span.className = `font-medium text-base leading-snug ${contentColor}`;
+                span.innerText = text;
+                btn.appendChild(span);
+
+                els.optionsContainer.appendChild(btn);
+            });
+
+            lucide.createIcons();
+            if (window.MathJax) MathJax.typesetPromise();
+        }
+
+        function handleOptionClick(key) {
+            if (answersState[currentQuestion]) return;
+
+            const q = questionsData[currentQuestion];
+            const correct = key === q.correct;
+            
+            answersState[currentQuestion] = { selected: key, isCorrect: correct };
+            selectedOption = key;
+
+            if (correct) {
+                score++;
+            }
+            renderQuestion();
+        }
+
+        function updateNavButtons() {
+            const isAr = lang === 'ar';
+            
+            if (currentQuestion === 0) {
+                els.prevBtn.disabled = true;
+                els.prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                els.prevBtn.disabled = false;
+                els.prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            els.prevBtnText.innerText = isAr ? "السابق" : "Back";
+            
+            const isLast = currentQuestion === questionsData.length - 1;
+            
+            if (selectedOption) {
+                els.nextBtnText.innerText = isAr ? (isLast ? "إنهاء" : "التالي") : (isLast ? "Finish" : "Next");
+                els.nextBtnIcon.setAttribute('data-lucide', isAr ? 'arrow-left' : 'arrow-right');
+                els.nextBtn.className = "flex-1 md:flex-none px-6 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base bg-slate-200 text-black hover:bg-white shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:-translate-y-1";
+            } else {
+                els.nextBtnText.innerText = isAr ? (isLast ? "إنهاء" : "تخطي") : (isLast ? "Finish" : "Skip");
+                els.nextBtnIcon.setAttribute('data-lucide', 'skip-forward');
+                els.nextBtn.className = "flex-1 md:flex-none px-6 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95 text-sm md:text-base bg-black/60 text-slate-400 hover:bg-slate-900 border border-slate-700 hover:border-slate-500";
+            }
+        }
+
+        function handleNext() {
+            selectedOption = null; 
+            
+            if (currentQuestion < questionsData.length - 1) {
+                currentQuestion++;
+                renderQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function handlePrev() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                selectedOption = null;
+                renderQuestion();
+            }
+        }
+
+        function showResults() {
+            els.quizView.classList.add('hidden');
+            els.quizView.classList.remove('flex');
+            els.scoreView.classList.remove('hidden');
+            els.scoreView.classList.add('flex');
+            renderScoreView();
+        }
+
+        function renderScoreView() {
+            const isAr = lang === 'ar';
+            els.finalTitle.innerText = isAr ? "النتيجة النهائية" : "Final Score";
+            els.finalScore.innerText = score;
+            els.totalCount.innerText = questionsData.length;
+            
+            let percentage = Math.round((score / questionsData.length) * 100);
+            els.finalPercentage.innerText = `${percentage}%`;
+
+            let msg = "";
+            if (percentage === 100) {
+                msg = isAr ? "أداء مثالي! أنت خبير." : "Perfect performance! You are an expert.";
+            } else if (percentage >= 75) {
+                msg = isAr ? "عمل رائع! مستوى ممتاز." : "Great job! Excellent level.";
+            } else if (percentage >= 50) {
+                msg = isAr ? "جيد، ولكن يمكنك التحسن." : "Good, but room for improvement.";
+            } else {
+                msg = isAr ? "حاول مرة أخرى لمراجعة معلوماتك." : "Try again to review your knowledge.";
+            }
+            els.finalMsg.innerText = msg;
+            els.restartBtnText.innerText = isAr ? "إعادة الاختبار" : "Restart Quiz";
+            lucide.createIcons();
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            selectedOption = null;
+            answersState = {}; 
+            
+            els.scoreView.classList.add('hidden');
+            els.scoreView.classList.remove('flex');
+            els.quizView.classList.remove('hidden');
+            els.quizView.classList.add('flex');
+            
+            renderQuestion();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
